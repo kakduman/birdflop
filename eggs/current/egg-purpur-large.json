@@ -5,7 +5,7 @@
     },
     "exported_at": "2020-11-23T04:31:17-05:00",
     "name": "purpur-large",
-    "author": "pemigrade@birdflop.com",
+    "author": "purpur@birdflop.com",
     "description": "Purpur egg for servers with more than 12GB of RAM.",
     "features": [
         "eula"
