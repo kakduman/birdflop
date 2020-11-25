@@ -1,0 +1,48 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v1"
+    },
+    "exported_at": "2020-11-25T06:46:51-05:00",
+    "name": "Waterfall",
+    "author": "purpur@birdflop.com",
+    "description": "Waterfall is a fork of the well-known BungeeCord server teleportation suite. Waterfall focuses on three main areas:\r\n\r\nStability: Waterfall aims to be stable. We will achieve this by making the code base testable and discouraging practices that lead to proxy lag.\r\nFeatures: Waterfall aims to include more features than canonical BungeeCord.\r\nScalability: Waterfall should be able to handle a large number of concurrent players, given a reasonably modern CPU, memory, and good network connection.",
+    "features": [
+        "eula"
+    ],
+    "image": "quay.io\/parkervcp\/pterodactyl-images:debian_openjdk-11",
+    "startup": "java -Xms{{SERVER_MEMORY}}M -Xmx{{SERVER_MEMORY}}M -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:+UnlockExperimentalVMOptions -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -Duser.timezone={{SERVER_TIMEZONE}} -jar {{SERVER_JARFILE}}",
+    "config": {
+        "files": "{\r\n    \"config.yml\": {\r\n        \"parser\": \"yaml\",\r\n        \"find\": {\r\n            \"listeners[0].query_enabled\": true,\r\n            \"listeners[0].query_port\": \"{{server.build.default.port}}\",\r\n            \"listeners[0].host\": \"0.0.0.0:{{server.build.default.port}}\",\r\n            \"servers.*.address\": {\r\n                \"regex:^(127\\\\.0\\\\.0\\\\.1|localhost)(:\\\\d{1,5})?$\": \"{{config.docker.interface}}$2\"\r\n            }\r\n        }\r\n    }\r\n}",
+        "startup": "{\r\n    \"done\": \"Listening on \",\r\n    \"userInteraction\": [\r\n        \"Listening on \/0.0.0.0:25577\"\r\n    ]\r\n}",
+        "logs": "{\r\n    \"custom\": false,\r\n    \"location\": \"proxy.log.0\"\r\n}",
+        "stop": "end"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n# Bungeecord Installation Script\r\n#\r\n# Server Files: \/mnt\/server\r\napt update\r\napt install -y curl\r\n\r\ncd \/mnt\/server\r\n\r\ncurl -o ${SERVER_JARFILE} https:\/\/papermc.io\/ci\/job\/Waterfall\/lastSuccessfulBuild\/artifact\/Waterfall-Proxy\/bootstrap\/target\/Waterfall.jar",
+            "container": "debian:buster-slim",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Bungeecord\/Waterfall Jar File",
+            "description": "The name of the Jarfile to use when running Bungeecord\/Waterfall. Obtain the latest waterfall from https:\/\/papermc.io\/ci\/job\/Waterfall\/lastSuccessfulBuild\/artifact\/Waterfall-Proxy\/bootstrap\/target\/Waterfall.jar or https:\/\/papermc.io\/ci\/job\/Waterfall.",
+            "env_variable": "SERVER_JARFILE",
+            "default_value": "Waterfall.jar",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|regex:\/^([\\w\\d._-]+)(\\.jar)$\/|max:80"
+        },
+        {
+            "name": "Server Timezone",
+            "description": "The server's timezone. Please be aware that all scheduled tasks will execute in the local time zone regardless of this value. Choose any timezone from the list at https:\/\/en.wikipedia.org\/wiki\/List_of_tz_database_time_zones.",
+            "env_variable": "SERVER_TIMEZONE",
+            "default_value": "America\/New_York",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:50"
+        }
+    ]
+}
