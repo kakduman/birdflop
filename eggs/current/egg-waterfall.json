@@ -3,7 +3,7 @@
     "meta": {
         "version": "PTDL_v1"
     },
-    "exported_at": "2020-12-03T09:56:07-05:00",
+    "exported_at": "2020-12-06T18:40:21-05:00",
     "name": "waterfall",
     "author": "purpur@birdflop.com",
     "description": "Waterfall is a fast fork of the well-known BungeeCord server teleportation suite.",
@@ -11,7 +11,7 @@
         "eula"
     ],
     "image": "quay.io\/parkervcp\/pterodactyl-images:debian_openjdk-11",
-    "startup": "java -Xms{{SERVER_MEMORY}}M -Xmx{{SERVER_MEMORY}}M -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:+UnlockExperimentalVMOptions -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -Duser.timezone={{SERVER_TIMEZONE}} -jar {{SERVER_JARFILE}}",
+    "startup": "java -Xms{{ALLOCATED_MEMORY}}M -Xmx{{ALLOCATED_MEMORY}}M -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:+UnlockExperimentalVMOptions -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -Duser.timezone={{SERVER_TIMEZONE}} -jar {{SERVER_JARFILE}}",
     "config": {
         "files": "{\r\n    \"config.yml\": {\r\n        \"parser\": \"yaml\",\r\n        \"find\": {\r\n            \"listeners[0].query_enabled\": true,\r\n            \"listeners[0].query_port\": \"{{server.build.default.port}}\",\r\n            \"listeners[0].host\": \"0.0.0.0:{{server.build.default.port}}\",\r\n            \"servers.*.address\": {\r\n                \"regex:^(127\\\\.0\\\\.0\\\\.1|localhost)(:\\\\d{1,5})?$\": \"{{config.docker.interface}}$2\"\r\n            }\r\n        }\r\n    }\r\n}",
         "startup": "{\r\n    \"done\": \"Listening on \",\r\n    \"userInteraction\": [\r\n        \"Listening on \/0.0.0.0:25577\"\r\n    ]\r\n}",
@@ -70,6 +70,15 @@
             "user_viewable": true,
             "user_editable": true,
             "rules": "nullable|string"
+        },
+        {
+            "name": "Allocated Memory",
+            "description": "We recommend keeping this value around 1000 MB. Do not change it unless you know what you're doing!",
+            "env_variable": "ALLOCATED_MEMORY",
+            "default_value": "1000",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|max:4000"
         }
     ]
 }
