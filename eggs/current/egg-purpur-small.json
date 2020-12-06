@@ -3,15 +3,15 @@
     "meta": {
         "version": "PTDL_v1"
     },
-    "exported_at": "2020-11-23T04:28:11-05:00",
+    "exported_at": "2020-12-06T18:40:09-05:00",
     "name": "purpur-small",
-    "author": "purpur@birdflop.com",
+    "author": "pemigrade@birdflop.com",
     "description": "Purpur egg for servers with at most 12GB of RAM.",
     "features": [
         "eula"
     ],
     "image": "quay.io\/parkervcp\/pterodactyl-images:debian_openjdk-11",
-    "startup": "java -Xms{{SERVER_MEMORY}}M -Xmx{{SERVER_MEMORY}}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https:\/\/mcflags.emc.gs -Daikars.new.flags=true -Duser.timezone={{SERVER_TIMEZONE}} -jar {{SERVER_JARFILE}}",
+    "startup": "java -Xms{{ALLOCATED_MEMORY}}M -Xmx{{ALLOCATED_MEMORY}}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https:\/\/mcflags.emc.gs -Daikars.new.flags=true -Duser.timezone={{SERVER_TIMEZONE}} -jar {{SERVER_JARFILE}}",
     "config": {
         "files": "{\r\n    \"server.properties\": {\r\n        \"parser\": \"properties\",\r\n        \"find\": {\r\n            \"server-ip\": \"0.0.0.0\",\r\n            \"server-port\": \"{{server.build.default.port}}\"\r\n        }\r\n    }\r\n}",
         "startup": "{\r\n    \"done\": \")! For help, type \",\r\n    \"userInteraction\": [\r\n        \"Go to eula.txt for more info.\"\r\n    ]\r\n}",
@@ -33,7 +33,7 @@
             "default_value": "purpurclip.jar",
             "user_viewable": true,
             "user_editable": true,
-            "rules": "required|string|max:50"
+            "rules": "required|regex:\/^([\\w\\d._-]+)(\\.jar)$\/|max:80"
         },
         {
             "name": "Server Timezone",
@@ -43,6 +43,15 @@
             "user_viewable": true,
             "user_editable": true,
             "rules": "required|string|max:50"
+        },
+        {
+            "name": "Allocated Memory",
+            "description": "Calculate the recommended amount of allocated memory specific to your server with the equation 4x\/5-1000, where x is the amount of memory purchased in MB. Please round to the nearest 100MB. Using too high of a value may cause your server to crash.",
+            "env_variable": "ALLOCATED_MEMORY",
+            "default_value": "2200",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|numeric|max:20000"
         }
     ]
 }
