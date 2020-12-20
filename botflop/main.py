@@ -19,10 +19,6 @@ async def on_ready():
     # Marks bot as running
     print('I have started.')
 
-@bot.command()
-async def ping(ctx):
-    await ctx.send(f'Your ping is {round(bot.latency * 1000)}ms')
-
 @bot.event
 async def on_message(message):
     channel = message.channel
