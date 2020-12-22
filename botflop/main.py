@@ -3,8 +3,9 @@ import discord
 import requests
 import json
 from discord.ext import commands
+from discord.ext.commands import has_permissions, MissingPermissions
 from dotenv import load_dotenv
-bot = commands.Bot(command_prefix = ",", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
 
 load_dotenv()
 token = os.getenv('token')
@@ -18,7 +19,7 @@ guild_id = int(os.getenv('guild_id'))
 async def on_ready():
     # Marks bot as running
     print('I have started.')
-
+    
 @bot.event
 async def on_message(message):
     channel = message.channel
@@ -155,5 +156,18 @@ async def on_message(message):
             #Says this if API key is incorrect # of characters
             await channel.send('Sorry, that doesn\'t appear to be an API token. An API token should be a long string resembling this: ```yQSB12ik6YRcmE4d8tIEj5gkQqDs6jQuZwVOo4ZjSGl28d46```')
             print("obvious incorrect sent to " + str(message.author.id))
+    await bot.process_commands(message)
 
+@bot.command()
+async def ping(ctx):
+	await ctx.send(f'Your ping is {round(bot.latency * 1000)}ms')
+
+@bot.command(name="react", pass_context=True)
+@has_permissions(administrator=True)
+async def react(ctx, url, reaction):
+    channel = await bot.fetch_channel(int(url.split("/")[5]))
+    message = await channel.fetch_message(int(url.split("/")[6]))
+    await message.add_reaction(reaction)
+    print('reacted to ' + url + ' with ' + reaction)
+    
 bot.run(token)
