@@ -21,7 +21,6 @@ verification_message = int(os.getenv('verification_message'))
 async def on_ready():
     # Marks bot as running
     print('I have started.')
-    print(str(verification_message))
     
 @bot.event
 async def on_message(message):
@@ -166,18 +165,17 @@ async def on_message(message):
 async def on_raw_reaction_add(payload):
     global verification_message
     global verification_channel
-    print(str(verification_message))
     if payload.message_id != verification_message:
         return
     if payload.user_id == bot.user.id:
         return
     # Remove the reaction
     guild = discord.utils.get(bot.guilds, id=guild_id)
-    verification_channel = await bot.fetch_channel(verification_channel)
-    verification_message = await verification_channel.fetch_message(verification_message)
+    verification_channel_obj = await bot.fetch_channel(verification_channel)
+    verification_message_obj = await verification_channel_obj.fetch_message(verification_message)
     user = bot.get_user(payload.user_id)
-    await verification_message.remove_reaction(payload.emoji, user)
-    print("sending message...")
+    await verification_message_obj.remove_reaction(payload.emoji, user)
+    print("Sending verification challenge to " + user.name + "#" + str(user.discriminator) + " (" + str(user.id) + ")")
     await user.send("Hey there! It looks like you'd like to verify your account. I'm here to help you with that!\n\nIf you're confused at any point, see https://birdflop.com/verification for a tutorial including images.\n\nWith that said, let's get started! You'll want to start by grabbing some API credentials for your account by signing into https://panel.birdflop.com. Head over to the **Account** section in the top right, then click on the **API Credentials tab**. You'll want to create an API key with description `Verification` and `172.18.0.2` in the **Allowed IPs section**.\n\nWhen you finish entering the necessary information, hit the blue **Create **button.\n\nNext, you'll want to copy your API credentials. After clicking **Create**, you'll receive a long string. Copy it with `ctrl+c` (`cmnd+c` on Mac) or by right-clicking it and selecting **Copy**.\n\nIf you click on the **Close **button before copying the API key, no worries! Delete your API key and create a new one with the same information.\n\nFinally, direct message your API key to Botflop: that's me!\n\nTo verify that you are messaging the key to the correct user, please ensure that the my ID is `Botflop#2403` and that my username is marked with a blue **BOT** badge. Additionally, the only server under the **Mutual Servers** tab should be Birdflop Hosting.\n\nAfter messaging me your API key, you should receive a success message. If you do not receive a success message, please create a ticket in the Birdflop Discord's support channel (https://ptb.discord.com/channels/746125698644705524/764280387253305354/764281363759104000)")
 
 @bot.command()
