@@ -14,11 +14,14 @@ duckfeet_role_id = int(os.getenv('duckfeet_role'))
 client_role_id = int(os.getenv('client_role'))
 subuser_role_id = int(os.getenv('subuser_role'))
 guild_id = int(os.getenv('guild_id'))
+verification_channel = int(os.getenv('verification_channel'))
+verification_message = int(os.getenv('verification_message'))
 
 @bot.event
 async def on_ready():
     # Marks bot as running
     print('I have started.')
+    print(str(verification_message))
     
 @bot.event
 async def on_message(message):
@@ -124,10 +127,10 @@ async def on_message(message):
                                 await member.add_roles(role)
                     
                     await channel.send ('Your Discord account has been linked to your panel account! Do not delete your API key.')
-                    print("Success message sent to " + str(message.author.id) + ". User linked to API key " + message.content + " and client_id " + str(json_response['attributes']['id']))     
+                    print("Success message sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")" + ". User linked to API key " + message.content + " and client_id " + str(json_response['attributes']['id']))     
                 else:
                     await channel.send('Sorry, this Panel account is already linked to a Discord account.')
-                    print("Duplicate message sent to " + str(message.author.id) + " for using API key " + message.content + " linked to client_id " + str(json_response['attributes']['id']))
+                    print("Duplicate message sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")" + " for using API key " + message.content + " linked to client_id " + str(json_response['attributes']['id']))
 
             # Makes json pretty with indentations and stuff, then writes to file
 #                json_dumps = json.dumps(json_response, indent = 2)
@@ -151,12 +154,31 @@ async def on_message(message):
             else: 
                 #Says if API key is the corect # of characters but invalid
                 await channel.send("Sorry, that appears to be an invalid API key.")
-                print('invalid sent to ' + str(message.author.id))
+                print('invalid sent to ' + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")")
         else:
             #Says this if API key is incorrect # of characters
             await channel.send('Sorry, that doesn\'t appear to be an API token. An API token should be a long string resembling this: ```yQSB12ik6YRcmE4d8tIEj5gkQqDs6jQuZwVOo4ZjSGl28d46```')
-            print("obvious incorrect sent to " + str(message.author.id))
+            print("obvious incorrect sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")")
     await bot.process_commands(message)
+
+
+@bot.event
+async def on_raw_reaction_add(payload):
+    global verification_message
+    global verification_channel
+    print(str(verification_message))
+    if payload.message_id != verification_message:
+        return
+    if payload.user_id == bot.user.id:
+        return
+    # Remove the reaction
+    guild = discord.utils.get(bot.guilds, id=guild_id)
+    verification_channel = await bot.fetch_channel(verification_channel)
+    verification_message = await verification_channel.fetch_message(verification_message)
+    user = bot.get_user(payload.user_id)
+    await verification_message.remove_reaction(payload.emoji, user)
+    print("sending message...")
+    await user.send("Hey there! It looks like you'd like to verify your account. I'm here to help you with that!\n\nIf you're confused at any point, see https://birdflop.com/verification for a tutorial including images.\n\nWith that said, let's get started! You'll want to start by grabbing some API credentials for your account by signing into https://panel.birdflop.com. Head over to the **Account** section in the top right, then click on the **API Credentials tab**. You'll want to create an API key with description `Verification` and `172.18.0.2` in the **Allowed IPs section**.\n\nWhen you finish entering the necessary information, hit the blue **Create **button.\n\nNext, you'll want to copy your API credentials. After clicking **Create**, you'll receive a long string. Copy it with `ctrl+c` (`cmnd+c` on Mac) or by right-clicking it and selecting **Copy**.\n\nIf you click on the **Close **button before copying the API key, no worries! Delete your API key and create a new one with the same information.\n\nFinally, direct message your API key to Botflop: that's me!\n\nTo verify that you are messaging the key to the correct user, please ensure that the my ID is `Botflop#2403` and that my username is marked with a blue **BOT** badge. Additionally, the only server under the **Mutual Servers** tab should be Birdflop Hosting.\n\nAfter messaging me your API key, you should receive a success message. If you do not receive a success message, please create a ticket in the Birdflop Discord's support channel (https://ptb.discord.com/channels/746125698644705524/764280387253305354/764281363759104000)")
 
 @bot.command()
 async def ping(ctx):
@@ -169,5 +191,7 @@ async def react(ctx, url, reaction):
     message = await channel.fetch_message(int(url.split("/")[6]))
     await message.add_reaction(reaction)
     print('reacted to ' + url + ' with ' + reaction)
-    
+
 bot.run(token)
+
+# full name: message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")"
