@@ -171,25 +171,26 @@ async def on_message(message):
             print("obvious incorrect sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")")
     
     elif len(message.attachments) > 0:
-        download = message.attachments[0].url
-        r = requests.get(download, allow_redirects=True)
-        text = r.text
-        text = "\n".join(text.splitlines())
-        if '�' not in text:  # If it's not an image/gif
-            truncated = False
-            if len(text) > 100000:
-                text = text[:99999]
-                truncated = True
-            req = requests.post('https://bin.birdflop.com/documents', data=text)
-            key = json.loads(req.content)['key']
-            response = ""
-            response = response + "https://bin.birdflop.com/" + key
-            response = response + "\nRequested by " + message.author.mention
-            if truncated:
-                response = response + "\n(file was truncated because it was too long.)"
-            embed_var = discord.Embed(title="Please use a paste service", color=0x1D83D4)
-            embed_var.description = response
-            await message.channel.send(embed=embed_var)
+        if message.attachments[0].url.endswith(('.png', '.jpg', '.jpeg', '.mp4', '.mov', '.avi', '.gif', '.image')) == False:
+            download = message.attachments[0].url
+            r = requests.get(download, allow_redirects=True)
+            text = r.text
+            text = "\n".join(text.splitlines())
+            if '�' not in text:  # If it's not an image/gif
+                truncated = False
+                if len(text) > 100000:
+                    text = text[:99999]
+                    truncated = True
+                req = requests.post('https://bin.birdflop.com/documents', data=text)
+                key = json.loads(req.content)['key']
+                response = ""
+                response = response + "https://bin.birdflop.com/" + key
+                response = response + "\nRequested by " + message.author.mention
+                if truncated:
+                    response = response + "\n(file was truncated because it was too long.)"
+                embed_var = discord.Embed(title="Please use a paste service", color=0x1D83D4)
+                embed_var.description = response
+                await message.channel.send(embed=embed_var)
     await bot.process_commands(message)
 
 
@@ -310,7 +311,8 @@ async def update_servers():
                 json_dumps = json.dumps(data, indent = 2)
                 file = open('users.json', 'w')
                 file.write(json_dumps)
-                file.close()
+                file.close()                
+                await member.edit(roles=[])
                 print("removed discord_id " + str(client['discord_id']) + " with client_id " + str(client['client_id']) + " and INVALID client_api_key " + client['client_api_key'])
         else:
  #           file = open('oldusers.json', 'r')
