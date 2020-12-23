@@ -2,11 +2,11 @@ import os
 import discord
 import requests
 import json
-from discord.ext import commands
+import asyncio
+import aiohttp
+from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions, MissingPermissions
 from dotenv import load_dotenv
-from datetime import datetime
-import threading
 
 bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
 
@@ -23,7 +23,7 @@ verification_message = int(os.getenv('verification_message'))
 @bot.event
 async def on_ready():
     # Marks bot as running
-    print('I have started.')
+    print('I am running.')
     
 @bot.event
 async def on_message(message):
@@ -212,20 +212,78 @@ async def react(ctx, url, reaction):
     await message.add_reaction(reaction)
     print('reacted to ' + url + ' with ' + reaction)
 
-'''def checkTime():
-    # This function runs periodically every 1 second
-    threading.Timer(1, checkTime).start()
+@tasks.loop(seconds=20)
+async def update_servers():
+    print("entering loop")
+    file = open('users.json', 'r')
+    data = json.load(file)
+    file.close()
+    guild = bot.get_guild(guild_id)
+    i=-1
+    for client in data['users']:
+        i+=1
+        member = guild.get_member(client['discord_id'])
+        if member:
+            api_key = client['client_api_key']
+            url = "https://panel.birdflop.com/api/client"
+            cookies = {
+                'pterodactyl_session': 'eyJpdiI6InhIVXp5ZE43WlMxUU1NQ1pyNWRFa1E9PSIsInZhbHVlIjoiQTNpcE9JV3FlcmZ6Ym9vS0dBTmxXMGtST2xyTFJvVEM5NWVWbVFJSnV6S1dwcTVGWHBhZzdjMHpkN0RNdDVkQiIsIm1hYyI6IjAxYTI5NDY1OWMzNDJlZWU2OTc3ZDYxYzIyMzlhZTFiYWY1ZjgwMjAwZjY3MDU4ZDYwMzhjOTRmYjMzNDliN2YifQ%3D%3D',
+            }
+            headers = {
+                'Accept': 'application/json',
+                'Authorization': 'Bearer ' + api_key,
+            }
+            print("Querying " + url)
+            response = requests.get(url, headers=headers, cookies=cookies)
 
-    now = datetime.now()
+            # If API token is verified to be correct, continues
+            if str(response) == "<Response [200]>":
 
-    current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time)
+                # Formats response for servers in JSON format
+                servers_json_response = response.json()
 
-    if(current_time == '02:11:00'):  # check if matches with the desired time
-        print('sending message')
-
-
-checkTime()'''
+                user_client = False
+                user_subuser = False
+                user_crabwings = False
+                user_duckfeet = False
+                for server in servers_json_response['data']:
+                    server_owner = server['attributes']['server_owner']
+                    if server_owner == True:
+                        user_client = True
+                    elif server_owner == False:
+                        user_subuser = True
+                    server_node = server['attributes']['node']
+                    if server_node == "Crabwings - NYC":
+                        user_crabwings = True
+                    elif server_node == "Duckfeet - EU":
+                        user_duckfeet = True
+                role = discord.utils.get(guild.roles, id=client_role_id)
+                if user_client == True:
+                    await member.add_roles(role)
+                else:
+                    await member.remove_roles(role)
+                role = discord.utils.get(guild.roles, id=subuser_role_id)
+                if user_subuser == True:
+                    await member.add_roles(role)
+                else:
+                    await member.remove_roles(role)
+                role = discord.utils.get(guild.roles, id=crabwings_role_id)
+                if user_crabwings == True:
+                    await member.add_roles(role)
+                else:
+                    await member.remove_roles(role)
+                role = discord.utils.get(guild.roles, id=duckfeet_role_id)
+                if user_duckfeet == True:
+                    await member.add_roles(role)
+                else:
+                    await member.remove_roles(role)
+            else:
+                client.pop(i)
+                print("removed discord_id " + client['discord_id'] + "with client_id " + client['client_id'] + " and INVALID client_api_key " + client['client_api_key'])
+                
+        else:
+            client.pop(i)
+            print("removed discord_id " + client['discord_id'] + "with client_id " + client['client_id'] + " and client_api_key " + client['client_api_key'])
 
 bot.run(token)
 
