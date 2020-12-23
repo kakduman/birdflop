@@ -136,7 +136,7 @@ async def on_message(message):
                     await channel.send ('Your Discord account has been linked to your panel account! You may unlink your Discord and panel accounts by reacting in the #verification channel or by deleting your Verification API key.')
                     print("Success message sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")" + ". User linked to API key " + message.content + " and client_id " + str(json_response['attributes']['id']))     
                 elif client_id_already_exists:
-                    await channel.send('Sorry, your panel account is already linked to a Discord account. If you would like to link your panel account to a different Discord account, please unlink your panel account first by deleting its Verification API key and waiting up to 5 minutes.')
+                    await channel.send('Sorry, your panel account is already linked to a Discord account. If you would like to link your panel account to a different Discord account, please unlink your panel account first by deleting its Verification API key and waiting up to 10 minutes.')
                     print("Duplicate panel message sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")" + " for using API key " + message.content + " linked to client_id " + str(json_response['attributes']['id']))
                 elif discord_id_already_exists:
                     await channel.send('Sorry, your Discord account is already linked to a panel account. If you would like to link your Discord account to a different panel account, please unlink your Discord account first by reacting in the #verification channel.')
