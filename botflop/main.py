@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions, MissingPermissions
 from dotenv import load_dotenv
 
-bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix = ".", intents=discord.Intents.all(), chunk_guilds_at_startup=True)
 
 load_dotenv()
 token = os.getenv('token')
@@ -44,7 +44,6 @@ async def on_message(message):
                 'Authorization': 'Bearer ' + message.content,
             }
 
-            print("Querying " + url)
             response = requests.get(url, headers=headers, cookies=cookies)
 
             # If API token is verified to be correct:
@@ -60,12 +59,16 @@ async def on_message(message):
                 file.close()
 
                 # Checks if user exists. If so, skips adding them to users.json
-                already_exists = False
+                client_id_already_exists = False
+                discord_id_already_exists = False
                 for user in data['users']:
                     if user['client_id'] == json_response['attributes']['id']:
-                        already_exists = True
+                        client_id_already_exists = True
                         print("User already exists")
-                if already_exists == False:       
+                    if user['discord_id'] == message.author.id:
+                        discord_id_already_exists = True
+                        print("User already exists")
+                if client_id_already_exists == False and discord_id_already_exists == False:       
                     data['users'].append({
                         'discord_id': message.author.id,
                         'client_id': json_response['attributes']['id'],
@@ -92,7 +95,6 @@ async def on_message(message):
                             'Authorization': 'Bearer ' + message.content,
                         }
 
-                        print("Querying " + url)
                         response = requests.get(url, headers=headers, cookies=cookies)
 
                         # If API token is verified to be correct, continues
@@ -129,11 +131,13 @@ async def on_message(message):
                                 role = discord.utils.get(guild.roles, id=duckfeet_role_id)
                                 await member.add_roles(role)
                     
-                    await channel.send ('Your Discord account has been linked to your panel account! Do not delete your API key.')
+                    await channel.send ('Your Discord account has been linked to your panel account! You may unlink your Discord and panel accounts by reacting in the #verification channel or by deleting your Verification API key.')
                     print("Success message sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")" + ". User linked to API key " + message.content + " and client_id " + str(json_response['attributes']['id']))     
-                else:
-                    await channel.send('Sorry, this Panel account is already linked to a Discord account.')
+                elif client_id_already_exists:
+                    await channel.send('Sorry, your panel account is already linked to a Discord account. If you would like to link your panel account to a different Discord account, please unlink your panel account first by deleting its Verification API key and waiting up to 5 minutes.')
                     print("Duplicate message sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")" + " for using API key " + message.content + " linked to client_id " + str(json_response['attributes']['id']))
+                elif discord_id_already_exists:
+                    await channel.send('Sorry, your Discord account is already linked to a panel account. If you would like to link your Discord account to a different panel account, please unlink your Discord account first by reacting in the #verification channel.')
 
             # Makes json pretty with indentations and stuff, then writes to file
 #                json_dumps = json.dumps(json_response, indent = 2)
@@ -177,11 +181,11 @@ async def on_raw_reaction_add(payload):
     guild = discord.utils.get(bot.guilds, id=guild_id)
     verification_channel_obj = await bot.fetch_channel(verification_channel)
     verification_message_obj = await verification_channel_obj.fetch_message(verification_message)
-    user = bot.get_user(payload.user_id)
-    await verification_message_obj.remove_reaction(payload.emoji, user)
+    member = guild.get_member(payload.user_id)
+    await verification_message_obj.remove_reaction(payload.emoji, member)
     if str(payload.emoji) == "✅":
-        await user.send("Hey there! It looks like you'd like to verify your account. I'm here to help you with that!\n\nIf you're confused at any point, see https://birdflop.com/verification for a tutorial including images.\n\nWith that said, let's get started! You'll want to start by grabbing some API credentials for your account by signing into https://panel.birdflop.com. Head over to the **Account** section in the top right, then click on the **API Credentials tab**. You'll want to create an API key with description `Verification` and `172.18.0.2` in the **Allowed IPs section**.\n\nWhen you finish entering the necessary information, hit the blue **Create **button.\n\nNext, you'll want to copy your API credentials. After clicking **Create**, you'll receive a long string. Copy it with `ctrl+c` (`cmnd+c` on Mac) or by right-clicking it and selecting **Copy**.\n\nIf you click on the **Close **button before copying the API key, no worries! Delete your API key and create a new one with the same information.\n\nFinally, direct message your API key to Botflop: that's me!\n\nTo verify that you are messaging the key to the correct user, please ensure that the my ID is `Botflop#2403` and that my username is marked with a blue **BOT** badge. Additionally, the only server under the **Mutual Servers** tab should be Birdflop Hosting.\n\nAfter messaging me your API key, you should receive a success message. If you do not receive a success message, please create a ticket in the Birdflop Discord's support channel (https://ptb.discord.com/channels/746125698644705524/764280387253305354/764281363759104000)")
-        print("sent verification challenge to " + user.name + "#" + str(user.discriminator) + " (" + str(user.id) + ")")
+        await member.send("Hey there! It looks like you'd like to verify your account. I'm here to help you with that!\n\nIf you're confused at any point, see https://birdflop.com/verification for a tutorial including images.\n\nWith that said, let's get started! You'll want to start by grabbing some API credentials for your account by signing into https://panel.birdflop.com. Head over to the **Account** section in the top right, then click on the **API Credentials tab**. You'll want to create an API key with description `Verification` and `172.18.0.2` in the **Allowed IPs section**.\n\nWhen you finish entering the necessary information, hit the blue **Create **button.\n\nNext, you'll want to copy your API credentials. After clicking **Create**, you'll receive a long string. Copy it with `ctrl+c` (`cmnd+c` on Mac) or by right-clicking it and selecting **Copy**.\n\nIf you click on the **Close **button before copying the API key, no worries! Delete your API key and create a new one with the same information.\n\nFinally, direct message your API key to Botflop: that's me!\n\nTo verify that you are messaging the key to the correct user, please ensure that the my ID is `Botflop#2403` and that my username is marked with a blue **BOT** badge. Additionally, the only server under the **Mutual Servers** tab should be Birdflop Hosting.\n\nAfter messaging me your API key, you should receive a success message. If you do not receive a success message, please create a ticket in the Birdflop Discord's #support-hosting channel.")
+        print("sent verification challenge to " + member.name + "#" + str(member.discriminator) + " (" + str(member.id) + ")")
     else:
         file = open('users.json', 'r')
         data = json.load(file)
@@ -190,7 +194,7 @@ async def on_raw_reaction_add(payload):
         j = -1
         for client in data['users']:
             j += 1
-            if client['discord_id'] == user.id:
+            if client['discord_id'] == member.id:
                 data['users'].pop(j)
                 i = 1
         if i == 1:
@@ -198,7 +202,9 @@ async def on_raw_reaction_add(payload):
             file = open('users.json', 'w')
             file.write(json_dumps)
             file.close()
-            print('successfully unlinked ' + user.name + "#" + str(user.discriminator) + " (" + str(user.id) + ")")
+            await member.edit(roles=[])
+            await member.send("Your Discord account has successfully been unlinked from your Panel account!")
+            print('successfully unlinked ' + member.name + "#" + str(member.discriminator) + " (" + str(member.id) + ")")
 
 @bot.command()
 async def ping(ctx):
@@ -212,9 +218,9 @@ async def react(ctx, url, reaction):
     await message.add_reaction(reaction)
     print('reacted to ' + url + ' with ' + reaction)
 
-@tasks.loop(seconds=20)
+@tasks.loop(minutes=10)
 async def update_servers():
-    print("entering loop")
+    print("synchronizing roles")
     file = open('users.json', 'r')
     data = json.load(file)
     file.close()
@@ -233,12 +239,10 @@ async def update_servers():
                 'Accept': 'application/json',
                 'Authorization': 'Bearer ' + api_key,
             }
-            print("Querying " + url)
             response = requests.get(url, headers=headers, cookies=cookies)
 
             # If API token is verified to be correct, continues
             if str(response) == "<Response [200]>":
-
                 # Formats response for servers in JSON format
                 servers_json_response = response.json()
 
@@ -278,13 +282,44 @@ async def update_servers():
                 else:
                     await member.remove_roles(role)
             else:
-                client.pop(i)
-                print("removed discord_id " + client['discord_id'] + "with client_id " + client['client_id'] + " and INVALID client_api_key " + client['client_api_key'])
-                
+                data['users'].pop(i)
+                json_dumps = json.dumps(data, indent = 2)
+                file = open('users.json', 'w')
+                file.write(json_dumps)
+                file.close()
+                print("removed discord_id " + str(client['discord_id']) + " with client_id " + str(client['client_id']) + " and INVALID client_api_key " + client['client_api_key'])
         else:
-            client.pop(i)
-            print("removed discord_id " + client['discord_id'] + "with client_id " + client['client_id'] + " and client_api_key " + client['client_api_key'])
+ #           file = open('oldusers.json', 'r')
+ #           olddata = json.load(file)
+ #           file.close()
+            # Checks if user exists. If so, skips adding them to users.json
+#            already_exists = False
+#            for olduser in olddata['users']:
+#                if olduser['discord_id'] == json_response['attributes']['id']:
+#                    
+#            if already_exists == False:
+#                olddata['users'].append({
+#                    'discord_id': message.author.id,
+#                    'client_id': json_response['attributes']['id'],
+#                    'client_api_key': message.content
+#                })
+#                json_dumps = json.dumps(olddata, indent = 2)
+#                file = open('oldusers.json', 'w')
+#                file.write(json_dumps)
+#                file.close()
+            data['users'].pop(i)
+            json_dumps = json.dumps(data, indent = 2)
+            file = open('users.json', 'w')
+            file.write(json_dumps)
+            file.close()
+            print("removed discord_id " + str(client['discord_id']) + " with client_id " + str(client['client_id']) + " and client_api_key " + client['client_api_key'])
 
+@update_servers.before_loop
+async def before_update_servers():
+    print('waiting to enter loop')
+    await bot.wait_until_ready()
+
+update_servers.start()
 bot.run(token)
 
 # full name: message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")"
