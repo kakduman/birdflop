@@ -28,9 +28,8 @@ async def on_ready():
     
 @bot.event
 async def on_message(message):
-    channel = message.channel
     if message.author != bot.user and message.guild == None:
-
+        channel = message.channel
         # Potential API key, so tries it out
         if len(message.content) == 48:
             url = "https://panel.birdflop.com/api/client/account"
@@ -170,6 +169,27 @@ async def on_message(message):
             #Says this if API key is incorrect # of characters
             await channel.send('Sorry, that doesn\'t appear to be an API token. An API token should be a long string resembling this: ```yQSB12ik6YRcmE4d8tIEj5gkQqDs6jQuZwVOo4ZjSGl28d46```')
             print("obvious incorrect sent to " + message.author.name + "#" + str(message.author.discriminator) + " (" + str(message.author.id) + ")")
+    
+    elif len(message.attachments) > 0:
+        download = message.attachments[0].url
+        r = requests.get(download, allow_redirects=True)
+        text = r.text
+        text = "\n".join(text.splitlines())
+        if '�' not in text:  # If it's not an image/gif
+            truncated = False
+            if len(text) > 100000:
+                text = text[:99999]
+                truncated = True
+            req = requests.post('https://bin.birdflop.com/documents', data=text)
+            key = json.loads(req.content)['key']
+            response = ""
+            response = response + "https://bin.birdflop.com/" + key
+            response = response + "\nRequested by " + message.author.mention
+            if truncated:
+                response = response + "\n(file was truncated because it was too long.)"
+            embed_var = discord.Embed(title="Please use a paste service", color=0x1D83D4)
+            embed_var.description = response
+            await message.channel.send(embed=embed_var)
     await bot.process_commands(message)
 
 
